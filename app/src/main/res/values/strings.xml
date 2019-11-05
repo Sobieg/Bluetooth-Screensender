@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Lab1</string>
+    <string name="server_mode">Режим сервера</string>
+    <string name="send_file">Send file</string>
+    <string name="send_screen">Send screen</string>
+    <string name="bluetooth_devices">Bluetooth devices:</string>
 </resources>
