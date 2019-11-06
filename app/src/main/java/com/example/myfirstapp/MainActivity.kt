@@ -10,7 +10,6 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.SystemClock.sleep
 import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.TextView
@@ -18,25 +17,26 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.IOException
-import java.lang.System.exit
 import java.util.*
 import java.util.UUID.fromString
-import java.util.UUID.randomUUID
 import kotlin.system.exitProcess
 import android.Manifest
-import android.widget.ActionMenuView
+import android.os.AsyncTask
 import androidx.core.app.ActivityCompat
 
 /*
-TODO: 1) Включать обнаружение, когда переходим в режим сервера
-TODO: 2) Сервер в отдельном треде
-TODO: 3) Разобраться с тем, что обнаруженных девайсов нет.
+TODO: 1) Включать обнаружение, когда переходим в режим сервера -- Done
+TODO: 2) Сервер в отдельном треде -- Done
+TODO: 3) Разобраться с тем, что обнаруженных девайсов нет. -- DONE
+TODO: 4) Сделать отправку хоть чего-нибудь
+TODO: 5) Сделать скриншотилку
+TODO: 6) Сделать отправку файла
  */
 
 class MainActivity : AppCompatActivity() {
 
 
-    private val MY_PERMISSIONS_ACCESS_COARSE_LOCATION = 1337
+    private val _MY_PERMISSIONS_ACCESS_COARSE_LOCATION = 1337
     private var bluetoothAdapter:BluetoothAdapter? = null
     private var devicesSet:MutableSet<BluetoothDevice> = hashSetOf()
     private var deviceNameList:MutableList<String> = MutableList(/*pairedDevices?.size?:0*/0) {""}
@@ -61,23 +61,66 @@ class MainActivity : AppCompatActivity() {
         bluetoothAdapter?.startDiscovery()
 
         switch_server.setOnCheckedChangeListener { buttonView, isChecked ->
-            run {//TODO: implement this
+            run {
                 if (isChecked) {
-//                    Toast.makeText(applicationContext, "ON", Toast.LENGTH_LONG).show()
-
-                    //В ОТДЕЛЬНОМ ТРЕДЕ ЗАПУСКАТЬ
-                    connectAsAServer()
+                    ServerWaiting().execute(1)
                 } else {
                     Toast.makeText(applicationContext, "OFF", Toast.LENGTH_LONG).show()
                 }
             }
 
         }
+    }
+    private inner class ServerWaiting : AsyncTask<Int, Int, BluetoothSocket?>() {
+        private val mmServerSocket: BluetoothServerSocket? by  lazy(LazyThreadSafetyMode.NONE) {
+            bluetoothAdapter?.listenUsingInsecureRfcommWithServiceRecord(sdpName, bluUUID)
+        }
+
+        override fun doInBackground(vararg params: Int?): BluetoothSocket? {
+            while (!isCancelled) {
+                val socket: BluetoothSocket? = try {
+                    mmServerSocket?.accept()
+                } catch (e: IOException) {
+                    Log.e("MY_TAG", "Socket's accept() method failed", e)
+                    return null
+                }
+                socket?.also {
+                    //Toast.makeText(applicationContext, "New connection", Toast.LENGTH_LONG).show()
+                    //Тут тоже обработка соединения, когда уже собственно соединились
+                    mmServerSocket?.close()
+                    return socket
+                }
+            }
+            return null
+        }
+
+        override fun onPreExecute() {
+            val discoverableIntent: Intent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
+                putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
+            }
+            startActivity(discoverableIntent)
+        }
 
 
+        override fun onPostExecute(result: BluetoothSocket?) {
+            //тут можно отправить приветственное сообщение.
+            try {
+                mmServerSocket?.close()
+            } catch(e: IOException) {
+                Log.e("MY_TAG", "Could not close the connect socket", e)
+            }
+        }
 
+        override fun onCancelled() {
+            try {
+                mmServerSocket?.close()
+            } catch(e: IOException) {
+                Log.e("MY_TAG", "Could not close the connect socket", e)
+            }
+        }
 
     }
+
 
 
     private fun checkBluetoothState() : BluetoothAdapter {
@@ -116,7 +159,7 @@ class MainActivity : AppCompatActivity() {
 
         if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.ACCESS_COARSE_LOCATION)
             != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), MY_PERMISSIONS_ACCESS_COARSE_LOCATION)
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), _MY_PERMISSIONS_ACCESS_COARSE_LOCATION)
         }
         val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
@@ -154,7 +197,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 BluetoothDevice.ACTION_NAME_CHANGED -> {
-                    Toast.makeText(applicationContext, "KEKEKEK", Toast.LENGTH_LONG).show()
+                    //Toast.makeText(applicationContext, "KEKEKEK", Toast.LENGTH_LONG).show()
                 }
 
             }
@@ -223,7 +266,7 @@ class MainActivity : AppCompatActivity() {
         newobj.cancel()
     }
 
-    private fun connectAsAServer(){
+    private fun connectAsAServer() {
         val newobj = ServerConnectThread()
         newobj.run()
         newobj.cancel()
