@@ -7,27 +7,39 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.SystemClock.sleep
 import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.IOException
+import java.lang.System.exit
 import java.util.*
 import java.util.UUID.fromString
 import java.util.UUID.randomUUID
 import kotlin.system.exitProcess
+import android.Manifest
+import android.widget.ActionMenuView
+import androidx.core.app.ActivityCompat
 
+/*
+TODO: 1) Включать обнаружение, когда переходим в режим сервера
+TODO: 2) Сервер в отдельном треде
+TODO: 3) Разобраться с тем, что обнаруженных девайсов нет.
+ */
 
 class MainActivity : AppCompatActivity() {
 
 
-
+    private val MY_PERMISSIONS_ACCESS_COARSE_LOCATION = 1337
     private var bluetoothAdapter:BluetoothAdapter? = null
-    private var devicesSet:MutableSet<BluetoothDevice>? = null
-    private var deviceNameList:MutableList<String> = MutableList(/*pairedDevices?.size?:0*/0, {""})
+    private var devicesSet:MutableSet<BluetoothDevice> = hashSetOf()
+    private var deviceNameList:MutableList<String> = MutableList(/*pairedDevices?.size?:0*/0) {""}
     private var devicesNameListAdapter:ArrayAdapter<String>? = null
     private var sdpName = "SUPERNAME"
     private var bluUUID: UUID = fromString("4788b9fd-6256-40b4-91e9-a011f800cce7")
@@ -38,8 +50,8 @@ class MainActivity : AppCompatActivity() {
 
 
         bluetoothAdapter = checkBluetoothState()
-        devicesSet = checkPairedDevices()?.toMutableSet()
-        devicesSet?.forEach { device -> deviceNameList.add(device.name) }
+//        devicesSet = checkPairedDevices()?.toMutableSet()
+//        devicesSet?.forEach { device -> deviceNameList.add(device.name) }
         devicesNameListAdapter = initListView()
 
 //        val mydev: BluetoothDevice? = pairedDevices?.find{ device -> device.name == "XMZPG" }
@@ -101,12 +113,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun regReceiver() {
-        val filterFound = IntentFilter(BluetoothDevice.ACTION_FOUND)
-        val filterStart = IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
-        val filterFinish = IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
-        registerReceiver(receiver, filterFound)
-        registerReceiver(receiver, filterStart)
-        registerReceiver(receiver, filterFinish)
+
+        if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.ACCESS_COARSE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), MY_PERMISSIONS_ACCESS_COARSE_LOCATION)
+        }
+        val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+        filter.addAction(BluetoothDevice.ACTION_NAME_CHANGED)
+//        val filterNotFound = IntentFilter(BluetoothDevice.)
+
+        registerReceiver(receiver, filter)
 
     }
 
@@ -118,9 +136,13 @@ class MainActivity : AppCompatActivity() {
 //                    Toast.makeText(applicationContext, "Found new device: " /*+ device.name*/, Toast.LENGTH_LONG).show()
 
                     val device: BluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                    var name = device.name
+                    if (device.name == null){
+                        name = device.address
+                    }
                     devicesSet?.add(device)
-                    devicesNameListAdapter?.add(device.name)
-                    Toast.makeText(applicationContext, "Found new device: " + device.name, Toast.LENGTH_LONG).show()
+                    devicesNameListAdapter?.add(name)
+                    Toast.makeText(applicationContext, "Found new device: $name", Toast.LENGTH_LONG).show()
                 }
 
                 BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
@@ -129,6 +151,10 @@ class MainActivity : AppCompatActivity() {
 
                 BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
                     Toast.makeText(applicationContext, "Discovery finished", Toast.LENGTH_LONG).show()
+                }
+
+                BluetoothDevice.ACTION_NAME_CHANGED -> {
+                    Toast.makeText(applicationContext, "KEKEKEK", Toast.LENGTH_LONG).show()
                 }
 
             }
