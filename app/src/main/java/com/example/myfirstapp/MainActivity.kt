@@ -137,7 +137,7 @@ class MainActivity : AppCompatActivity() {
         private val mmSocket: BluetoothSocket? by lazy(LazyThreadSafetyMode.NONE) {
             device?.createRfcommSocketToServiceRecord(bluUUID)
         }
-        public override fun run() {
+        override fun run() {
             bluetoothAdapter?.cancelDiscovery()
 
             mmSocket?.use {socket ->
@@ -166,7 +166,7 @@ class MainActivity : AppCompatActivity() {
                 val socket: BluetoothSocket? = try {
                     mmServerSocket?.accept()
                 } catch (e: IOException) {
-                    Log.e("MY_TAG", "Soket's accept() method failded", e)
+                    Log.e("MY_TAG", "Socket's accept() method failed", e)
                     shouldLoop = false
                     null
                 }
