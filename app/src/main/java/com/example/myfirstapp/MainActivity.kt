@@ -52,6 +52,8 @@ class MainActivity : AppCompatActivity() {
             run {//TODO: implement this
                 if (isChecked) {
 //                    Toast.makeText(applicationContext, "ON", Toast.LENGTH_LONG).show()
+
+                    //В ОТДЕЛЬНОМ ТРЕДЕ ЗАПУСКАТЬ
                     connectAsAServer()
                 } else {
                     Toast.makeText(applicationContext, "OFF", Toast.LENGTH_LONG).show()
@@ -155,9 +157,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private inner class ServerConnectThread() : Thread() {
+    private inner class ServerConnectThread : Thread() {
         private val mmServerSocket: BluetoothServerSocket? by  lazy(LazyThreadSafetyMode.NONE) {
-            bluetoothAdapter?.listenUsingRfcommWithServiceRecord(sdpName, bluUUID)
+            bluetoothAdapter?.listenUsingInsecureRfcommWithServiceRecord(sdpName, bluUUID)
         }
 
         override fun run() {
