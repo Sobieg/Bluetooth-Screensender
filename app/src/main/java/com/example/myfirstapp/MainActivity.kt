@@ -15,9 +15,14 @@ import kotlin.system.exitProcess
 import android.Manifest
 import android.app.Activity
 import android.content.*
+import android.graphics.Bitmap
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.io.IOException
 
 
 /*
@@ -53,6 +58,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var fileWriter: FileWrite
 
     private lateinit var serverController: BluetoothServerController
+    private lateinit var client: BluetoothClient
 
 
     private val mContext:MainActivity = this
@@ -103,12 +109,13 @@ class MainActivity : AppCompatActivity() {
 
         if (requestCode == GET_FILE_REQUEST && resultCode == Activity.RESULT_OK) {
             data?.data.also { uri ->
-                BluetoothClient(
+                client = BluetoothClient(
                     activity = this,
                     device = cliDevice,
                     uri = uri!!,
                     purpose = cliPurpose
-                ).start()
+                )
+                client.start()
             }
         }
         if (requestCode == CREATE_FILE && resultCode == Activity.RESULT_OK) {
@@ -117,6 +124,16 @@ class MainActivity : AppCompatActivity() {
                     activity = this,
                     uri = uri!!,
                     bytes = serverController.server.bytes
+                ).start()
+            }
+        }
+
+        if (requestCode == CREATE_SCREEN && resultCode == Activity.RESULT_OK) {
+            data?.data.also { uri ->
+                FileWrite(
+                    activity = this,
+                    uri = uri!!,
+                    bytes = client.bytes
                 ).start()
             }
         }
@@ -148,7 +165,13 @@ class MainActivity : AppCompatActivity() {
             startActivityForResult(intent, GET_FILE_REQUEST)
         }
         else {
-//            BluetoothClient(this, device, false, null)
+            client = BluetoothClient(
+                activity = this,
+                device = cliDevice,
+                uri = null,
+                purpose = purpose
+            )
+            client.start()
         }
     }
 
