@@ -93,7 +93,7 @@ class BluetoothServer(private val activity: MainActivity, private val socket: Bl
         }
         activity.startActivityForResult(intent, CREATE_FILE)
     }
-
+//получение файла
     private fun receiveFile() {
         var available = inputStream.available()
         while (available == 0) {
@@ -183,19 +183,6 @@ class BluetoothServer(private val activity: MainActivity, private val socket: Bl
     }
 
     private fun takeScreenshot(view: View) : Bitmap {
-//        val displayMetrics = DisplayMetrics()
-//        activity.windowManager.defaultDisplay.getMetrics(displayMetrics)
-//        val width : Int = displayMetrics.widthPixels
-//        val height : Int = displayMetrics.heightPixels
-//        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-//        val canvas = Canvas(bitmap)
-//        val bgDrawable = view.background
-//        if (bgDrawable != null) {
-//            bgDrawable.draw(canvas)
-//        }
-//        else {
-//            canvas.drawColor(Color.WHITE)
-//        }
 
 
         return Screenshoter.takeScreenshotOfRootView(view)

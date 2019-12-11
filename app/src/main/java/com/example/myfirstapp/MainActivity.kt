@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity() {
         devicesNameListAdapter = initListView()
         regReceiver()
         bluetoothAdapter.startDiscovery()
-
+        //переключение свича на сервер
         switch_server.setOnCheckedChangeListener { buttonView, isChecked ->
             run {
                 if (isChecked) {
@@ -96,7 +96,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
+    //включение видимости для сервера
     private fun enableDiscoverability() {
         val discoverableIntent: Intent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
             putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
@@ -104,7 +104,7 @@ class MainActivity : AppCompatActivity() {
         startActivity(discoverableIntent)
     }
 
-
+//завершение активити
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 
         if (requestCode == GET_FILE_REQUEST && resultCode == Activity.RESULT_OK) {
@@ -142,18 +142,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getBluetoothAdapter() : BluetoothAdapter {
-        //Включаем блютусик, если выключен
+        //Включаем блютус, если выключен
         val bluetoothAdapter: BluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-            ?: //Девайс не поддерживает блютусик
+            ?: //Девайс не поддерживает блютус
             exitProcess(1)
-        //включаем блютусик, если он выключен
+        //включаем блютуc, если он выключен
         if (!bluetoothAdapter.isEnabled) {
             bluetoothAdapter.enable()
         }
         return bluetoothAdapter
     }
 
-
+    //client
     private fun bluetoothClientPrepare(purpose :Boolean) {
         Log.i(TAG, "Start preparing client")
         cliPurpose = purpose
@@ -163,7 +163,7 @@ class MainActivity : AppCompatActivity() {
                 type = "*/*"
             }
             startActivityForResult(intent, GET_FILE_REQUEST)
-        }
+        } //если нужен скрин
         else {
             client = BluetoothClient(
                 activity = this,
@@ -174,7 +174,7 @@ class MainActivity : AppCompatActivity() {
             client.start()
         }
     }
-
+//окошко для клиента
     private fun showDialog(device: BluetoothDevice) {
         val builder = AlertDialog.Builder(this)
 
@@ -201,7 +201,7 @@ class MainActivity : AppCompatActivity() {
         }
         return adapter
     }
-
+//обработка пермишен
     private fun regReceiver() {
 
         if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -220,7 +220,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-//    private val newConnReceiver = NewBluetoothConnection()
+//    отображение нового устройства и добавление в список
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val action: String? = intent.action

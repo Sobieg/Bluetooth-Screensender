@@ -38,7 +38,7 @@ class BluetoothClient(private val activity: MainActivity, private val device: Bl
 
         socket = device.createRfcommSocketToServiceRecord(uuid)
         socket.connect()
-
+    //считывание файла
         if (purpose) {
             fileInputStream = uri?.let { activity.contentResolver.openInputStream(it) }!!
             val available = fileInputStream.available()
@@ -50,7 +50,7 @@ class BluetoothClient(private val activity: MainActivity, private val device: Bl
             fileInputStream = socket.inputStream // заглушка, лол)
         }
 
-
+            //блютузные стримы
         outputStream = socket.outputStream
         inputStream = socket.inputStream
 
@@ -59,10 +59,10 @@ class BluetoothClient(private val activity: MainActivity, private val device: Bl
                 Log.i(TAG, "Sending file...")
                 sendFile(bytes)
             } else {
-                Log.i(TAG, "Get purpose false")
+                Log.i(TAG, "Get purpose false") //загрузка скрина
                 getScreenShot()
             }
-        }
+        } //при эксепшене
         catch (e: Exception) {
             Log.e(TAG, "Cannot send", e)
         }
@@ -96,7 +96,7 @@ class BluetoothClient(private val activity: MainActivity, private val device: Bl
         resp = String(bytes)
         Log.d(TAG, "get response: $resp")
 
-
+            //размер файла строкой
         outputStream.write(file.size.toString().toByteArray())
         outputStream.flush()
         available = 0
